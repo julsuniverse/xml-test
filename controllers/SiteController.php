@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\services\CurrencyService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -12,6 +13,13 @@ use app\models\ContactForm;
 
 class SiteController extends Controller
 {
+    private $currencyService;
+    public function __construct(string $id, $module,CurrencyService $currencyService, array $config = [])
+    {
+        parent::__construct($id, $module, $config);
+        $this->currencyService = $currencyService;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -61,7 +69,11 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $currency = $this->currencyService->getCurrentRate();
+        return $this->render('index', [
+            'usd' => $currency['usd'],
+            'eur' => $currency['eur']
+        ]);
     }
 
     /**

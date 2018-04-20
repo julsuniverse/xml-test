@@ -55,4 +55,15 @@ class CurrencyService
             $currency->save();
         }
     }
+
+    public function getCurrentRate()
+    {
+        $usd = CurrencyRate::find()->where(['code' => CurrencyRate::USD])->limit(1)->one();
+        $eur = CurrencyRate::find()->where(['code' => CurrencyRate::EUR])->limit(1)->one();
+
+        return [
+            'usd' => $usd,
+            'eur' => $eur
+        ];
+    }
 }
