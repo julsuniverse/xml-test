@@ -4,39 +4,55 @@
 namespace app\services;
 
 
+use app\models\CurrencyRate;
 use SimpleXMLElement;
+use GuzzleHttp\Client;
 
 class CurrencyService
 {
-    private $url = 'http://www.sedlabanki.is/xmltimeseries/Default.aspx?DagsFra=LATEST&GroupID=9&Type=xml';
+    private $url;
+    private $client;
 
-    const USD = 'USD.ISK.OVMI.S.D';
-    const EUR = 'EUR.ISK.OVMI.S.D';
+    public function __construct()
+    {
+        $this->url = 'http://www.sedlabanki.is/xmltimeseries/Default.aspx?DagsFra=LATEST&GroupID=9&Type=xml';
+        $this->client = new Client();
+    }
 
     public function getXml()
     {
-        $client = new \GuzzleHttp\Client();
-        $xml = $client->request('GET', $this->url);
+        $xml = $this->client->request('GET', $this->url);
 
         $xml = new SimpleXMLElement($xml->getBody());
         $result = $this->getRate($xml);
 
-        print_r($result);
+        //print_r($result);
+        $this->save($result);
     }
 
-    public function getRate($xml)
+    private function getRate($xml)
     {
         $result = [];
 
         foreach ($xml as $currency) {
-            if ($currency->FameName == self::USD || $currency->FameName == self::EUR) {
+            if ($currency->FameName == CurrencyRate::USD || $currency->FameName == CurrencyRate::EUR) {
                 $res['name'] = (string)$currency->FameName;
                 $res['date'] = (string)$currency->TimeSeriesData->Entry->Date;
-                $res['value'] = (string)$currency->TimeSeriesData->Entry->Value;
+                $res['value'] = (double)$currency->TimeSeriesData->Entry->Value;
 
                 $result[] = $res;
             }
         }
         return $result;
+    }
+
+    private function save($data)
+    {
+        foreach ($data as $array) {
+            /** @var CurrencyRate $currency */
+            $currency = CurrencyRate::findByName($array['name']);
+            $currency->setValues($array);
+            $currency->save();
+        }
     }
 }
