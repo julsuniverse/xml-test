@@ -2,15 +2,26 @@
 
 namespace app\commands;
 
+use app\services\CurrencyService;
 use yii\console\Controller;
 
 class CurrencyController extends  Controller
 {
+    private $currencyService;
+
+    public function __construct(
+        $id,
+        $module,
+        CurrencyService $currencyService,
+        array $config = []
+    )
+    {
+        $this->currencyService = $currencyService;
+        parent::__construct($id, $module, $config);
+    }
+
     public function actionIndex()
     {
-        $client = new \GuzzleHttp\Client();
-        $url = 'http://www.sedlabanki.is/xmltimeseries/Default.aspx?DagsFra=LATEST&GroupID=9&Type=xml';
-        $res = $client->request('GET', $url);
-        echo $res->getBody();
+        $this->currencyService->getXml();
     }
 }
